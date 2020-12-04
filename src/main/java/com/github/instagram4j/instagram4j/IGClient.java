@@ -20,9 +20,11 @@ import com.github.instagram4j.instagram4j.models.user.Profile;
 import com.github.instagram4j.instagram4j.requests.IGRequest;
 import com.github.instagram4j.instagram4j.requests.accounts.AccountsLoginRequest;
 import com.github.instagram4j.instagram4j.requests.accounts.AccountsTwoFactorLoginRequest;
+import com.github.instagram4j.instagram4j.requests.challenge.ChallengeSendCodeRequest;
 import com.github.instagram4j.instagram4j.requests.qe.QeSyncRequest;
 import com.github.instagram4j.instagram4j.responses.IGResponse;
 import com.github.instagram4j.instagram4j.responses.accounts.LoginResponse;
+import com.github.instagram4j.instagram4j.responses.challenge.Challenge;
 import com.github.instagram4j.instagram4j.utils.IGUtils;
 import kotlin.Pair;
 import lombok.AccessLevel;
@@ -112,6 +114,16 @@ public class IGClient implements Serializable {
                                 this.encryptionKey),
                         code,
                         identifier).execute(this))
+                .thenApply((res) -> {
+                    this.setLoggedInState(res);
+
+                    return res;
+                });
+    }
+
+    public CompletableFuture<LoginResponse> sendLoginRequest(Challenge challenge, String code) {
+        return new QeSyncRequest().execute(this)
+                .thenCompose(res -> new ChallengeSendCodeRequest(challenge.getApi_path(), code).execute(this))
                 .thenApply((res) -> {
                     this.setLoggedInState(res);
 
